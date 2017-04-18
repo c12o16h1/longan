@@ -86,6 +86,8 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 var _lodash = __webpack_require__(2);
 
 var _lodash2 = _interopRequireDefault(_lodash);
@@ -94,13 +96,78 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Component = function Component() {
-    _classCallCheck(this, Component);
+var LonganComponent = function () {
+    function LonganComponent() {
+        _classCallCheck(this, LonganComponent);
+    }
 
-    console.log(this.name);
+    /**
+     * Function to create new Proxy
+     * @param name required
+     * @param obj optional
+     * @returns {Proxy}
+     */
+
+
+    _createClass(LonganComponent, null, [{
+        key: 'create',
+        value: function create(name) {
+            var obj = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+            if (!name || typeof name !== 'string' || name.length < 1 || name.length > 255) throw new Error('Component name is required!');
+            (0, _lodash2.default)(obj, function (value, key) {
+                obj[key] = LonganComponent.push(value);
+            });
+            var proxy = new Proxy(obj, LonganComponent.proxyHandler);
+            proxy._longan = {
+                name: name
+            };
+            return proxy;
+        }
+
+        /**
+         * Proxy handler
+         * @type {{get: LonganComponent.proxyHandler.get, set: LonganComponent.proxyHandler.set}}
+         */
+
+    }, {
+        key: 'push',
+
+
+        /**
+         * Recursive creating Proxies for deep objects
+         * @param value
+         * @returns {*}
+         */
+        value: function push(parent, key, value) {
+            if (value instanceof Object) {
+                var nameGenerated = parent._longan.name + '.' + key;
+                return LonganComponent.create(nameGenerated, value);
+            }
+            return value;
+        }
+    }]);
+
+    return LonganComponent;
+}();
+
+LonganComponent.proxyHandler = {
+    get: function get(target, name) {
+        return target[name];
+    },
+    set: function set(target, prop, newval, receiver) {
+        //Skip creating proxies for internal objects
+        if (prop[0] === "_") {
+            target[prop] = newval;
+            return true;
+        }
+        target[prop] = LonganComponent.push(target, prop, newval);
+        console.log('Target: ' + target + ', prop: ' + prop + ', newval ' + newval);
+        // Indicate success
+        return true;
+    }
 };
-
-exports.default = Component;
+exports.default = LonganComponent;
 
 /***/ }),
 /* 2 */
@@ -9622,33 +9689,23 @@ module.exports = function (module) {
 "use strict";
 
 
-var _component2 = __webpack_require__(1);
+var _component = __webpack_require__(1);
 
-var _component3 = _interopRequireDefault(_component2);
+var _component2 = _interopRequireDefault(_component);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var MainComponent = _component2.default.create('MainComponent');
+MainComponent.tt = 23;
+var b = {};
+MainComponent.b = b;
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-console.log(22);
-
-var test = function (_component) {
-  _inherits(test, _component);
-
-  function test() {
-    _classCallCheck(this, test);
-
-    return _possibleConstructorReturn(this, (test.__proto__ || Object.getPrototypeOf(test)).apply(this, arguments));
-  }
-
-  return test;
-}(_component3.default);
-
-new test();
+MainComponent.oo = {
+    a: 37
+};
+MainComponent.oo.gg = "gg";
+console.log(MainComponent);
+window.MainComponent = MainComponent;
 
 /***/ })
 /******/ ]);
