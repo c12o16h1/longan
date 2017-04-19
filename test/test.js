@@ -1,13 +1,28 @@
 import LonganComponent from '../lib/component'
-const MainComponent = LonganComponent.create('MainComponent');
-MainComponent.tt = 23;
-let b = {};
-MainComponent.b = b;
+import Tree from '../lib/tree'
+const MainComponent = new LonganComponent('MainComponent');
+const HeaderComponent = new LonganComponent('HeaderComponent');
+MainComponent.run =  function () {
+    console.log(this._longan.name);
+    let a = ()=>{
+        console.log(this)
 
+    };
+    a();
+    MainComponent.tt = 23;
+    MainComponent.use(HeaderComponent);
+    let b = {};
+// MainComponent.b = b;
+//
+//
+// MainComponent.oo = {
+//     a:37
+// };
+// MainComponent.oo.gg="gg";
 
-MainComponent.oo = {
-    a:37
+    window.MainComponent = MainComponent;
+    window.HeaderComponent = HeaderComponent;
 };
-MainComponent.oo.gg="gg";
-console.log(MainComponent);
-window.MainComponent = MainComponent;
+let c = {};
+// MainComponent.run = res;
+MainComponent.run();

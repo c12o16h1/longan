@@ -63,11 +63,31 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+if (!window.__LonganTree) {
+    var tree = {
+        get: function get(prop) {
+            return tree[prop];
+        }
+    };
+    window.__LonganTree = tree;
+}
+exports.default = window.__LonganTree;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 /* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
@@ -76,7 +96,7 @@ module.exports = __webpack_amd_options__;
 /* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -86,24 +106,68 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _lodash = __webpack_require__(2);
+var _lodash = __webpack_require__(4);
 
 var _lodash2 = _interopRequireDefault(_lodash);
+
+var _map = __webpack_require__(3);
+
+var _map2 = _interopRequireDefault(_map);
+
+var _tree = __webpack_require__(0);
+
+var _tree2 = _interopRequireDefault(_tree);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var LonganComponent = function () {
-    function LonganComponent() {
+    function LonganComponent(name) {
+        var obj = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
         _classCallCheck(this, LonganComponent);
+
+        //Check input
+        if (!LonganComponent.isPureObject(obj)) {
+            throw new Error(obj + ' is not a valid object!');
+        }
+        if (!name || typeof name !== 'string' || name.length < 1 || name.length > 255) {
+            throw new Error('Component name is required!');
+        }
+        /**
+         * Function to use other Longan objects in this scope
+         * @param obj
+         */
+        var use = function use(obj) {
+            if (LonganComponent.isLonganObject(obj)) {
+                //Add 'this' object as dependant to used object
+                if (obj._longan.dependants.indexOf(this._longan.name) === -1) {
+                    console.log(obj._longan.dependants.indexOf(this._longan.name));
+                    obj._longan.dependants.push(this._longan.name);
+                    console.info('Object ' + this._longan.name + ' was added as dependant to ' + obj._longan.name);
+                }
+            } else {
+                throw new Error(obj + ' is not a valid Longan object! Wrap it before use.');
+            }
+        };
+
+        //Stick required framework methods and properties
+        obj._longan = {
+            name: name,
+            dependants: []
+        };
+        obj.use = use;
+        console.log(typeof obj === 'undefined' ? 'undefined' : _typeof(obj));
+        return LonganComponent.create(obj);
     }
 
     /**
      * Function to create new Proxy
-     * @param name required
      * @param obj optional
      * @returns {Proxy}
      */
@@ -111,17 +175,12 @@ var LonganComponent = function () {
 
     _createClass(LonganComponent, null, [{
         key: 'create',
-        value: function create(name) {
-            var obj = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-            if (!name || typeof name !== 'string' || name.length < 1 || name.length > 255) throw new Error('Component name is required!');
+        value: function create(obj) {
             (0, _lodash2.default)(obj, function (value, key) {
-                obj[key] = LonganComponent.push(value);
+                obj[key] = LonganComponent.proxifyRecursive(value);
             });
             var proxy = new Proxy(obj, LonganComponent.proxyHandler);
-            proxy._longan = {
-                name: name
-            };
+            _tree2.default[obj._longan.name] = proxy;
             return proxy;
         }
 
@@ -131,20 +190,46 @@ var LonganComponent = function () {
          */
 
     }, {
-        key: 'push',
+        key: 'proxifyRecursive',
 
 
         /**
          * Recursive creating Proxies for deep objects
+         * @param parent - parent target object
+         * @param key - param name to be added in parent object
          * @param value
          * @returns {*}
          */
-        value: function push(parent, key, value) {
-            if (value instanceof Object) {
+        value: function proxifyRecursive(parent, key, value) {
+            if (LonganComponent.isLonganObject(parent) && LonganComponent.isPureObject(value)) {
                 var nameGenerated = parent._longan.name + '.' + key;
-                return LonganComponent.create(nameGenerated, value);
+                return new LonganComponent(nameGenerated, value);
             }
             return value;
+        }
+
+        /**
+         * Function to check objects before import to use
+         * @param obj
+         * @returns {boolean}
+         */
+
+    }, {
+        key: 'isPureObject',
+        value: function isPureObject(something) {
+            return something && something instanceof Object && !(something instanceof Function) && !(something instanceof Array) && !(something instanceof Promise) && !(something instanceof Number) && !(something instanceof String);
+        }
+
+        /**
+         * Function to check object to be longan object
+         * @param something
+         * @returns {boolean}
+         */
+
+    }, {
+        key: 'isLonganObject',
+        value: function isLonganObject(something) {
+            return LonganComponent.isPureObject(something) && something._longan instanceof Object;
         }
     }]);
 
@@ -152,16 +237,28 @@ var LonganComponent = function () {
 }();
 
 LonganComponent.proxyHandler = {
-    get: function get(target, name) {
-        return target[name];
+    get: function get(target, prop, receiver) {
+        // if (!target || !receiver || !target._longan || !receiver._longan) {
+        //     throw new Error('target or receiver is not a Longan objects!');
+        // }
+
+        //Save recipients
+        if (target[prop] && target[prop] instanceof Object && target[prop]._longan instanceof Object) {
+            //Save directly in recipients object
+            target[prop]._longan.recipients.push(receiver);
+            //Save in weakMap
+            _map2.default.push(target[prop], receiver._longan.name);
+            // console.log(target[prop]._longan.recipients);
+        }
+        return target[prop];
     },
     set: function set(target, prop, newval, receiver) {
-        //Skip creating proxies for internal objects
+        //Skip creating proxies for private objects
         if (prop[0] === "_") {
             target[prop] = newval;
             return true;
         }
-        target[prop] = LonganComponent.push(target, prop, newval);
+        target[prop] = LonganComponent.proxifyRecursive(target, prop, newval);
         console.log('Target: ' + target + ', prop: ' + prop + ', newval ' + newval);
         // Indicate success
         return true;
@@ -170,7 +267,28 @@ LonganComponent.proxyHandler = {
 exports.default = LonganComponent;
 
 /***/ }),
-/* 2 */
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+if (!window.__LonganWeakMap) {
+    var map = new WeakMap();
+    map.push = function (key, value) {
+        var existedValue = map.get(key) || [];
+        existedValue.push(value);
+        return map.set(key, existedValue);
+    };
+    window.__LonganWeakMap = map;
+}
+exports.default = window.__LonganWeakMap;
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9608,7 +9726,7 @@ LazyWrapper.prototype.clone=lazyClone;LazyWrapper.prototype.reverse=lazyReverse;
 lodash.prototype.at=wrapperAt;lodash.prototype.chain=wrapperChain;lodash.prototype.commit=wrapperCommit;lodash.prototype.next=wrapperNext;lodash.prototype.plant=wrapperPlant;lodash.prototype.reverse=wrapperReverse;lodash.prototype.toJSON=lodash.prototype.valueOf=lodash.prototype.value=wrapperValue;// Add lazy aliases.
 lodash.prototype.first=lodash.prototype.head;if(symIterator){lodash.prototype[symIterator]=wrapperToIterator;}return lodash;};/*--------------------------------------------------------------------------*/// Export lodash.
 var _=runInContext();// Some AMD build optimizers, like r.js, check for condition patterns like:
-if("function"=='function'&&_typeof(__webpack_require__(0))=='object'&&__webpack_require__(0)){// Expose Lodash on the global object to prevent errors when Lodash is
+if("function"=='function'&&_typeof(__webpack_require__(1))=='object'&&__webpack_require__(1)){// Expose Lodash on the global object to prevent errors when Lodash is
 // loaded by a script tag in the presence of an AMD loader.
 // See http://requirejs.org/docs/errors.html#mismatch for more details.
 // Use `_.noConflict` to remove Lodash from the global object.
@@ -9620,10 +9738,10 @@ else if(freeModule){// Export for Node.js.
 (freeModule.exports=_)._=_;// Export for CommonJS support.
 freeExports._=_;}else{// Export to the global object.
 root._=_;}}).call(undefined);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(4)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(5), __webpack_require__(6)(module)))
 
 /***/ }),
-/* 3 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9653,7 +9771,7 @@ try {
 module.exports = g;
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9683,29 +9801,49 @@ module.exports = function (module) {
 };
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _component = __webpack_require__(1);
+var _component = __webpack_require__(2);
 
 var _component2 = _interopRequireDefault(_component);
 
+var _tree = __webpack_require__(0);
+
+var _tree2 = _interopRequireDefault(_tree);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var MainComponent = _component2.default.create('MainComponent');
-MainComponent.tt = 23;
-var b = {};
-MainComponent.b = b;
+var MainComponent = new _component2.default('MainComponent');
+var HeaderComponent = new _component2.default('HeaderComponent');
+MainComponent.run = function () {
+    var _this = this;
 
-MainComponent.oo = {
-    a: 37
+    console.log(this._longan.name);
+    var a = function a() {
+        console.log(_this);
+    };
+    a();
+    MainComponent.tt = 23;
+    MainComponent.use(HeaderComponent);
+    var b = {};
+    // MainComponent.b = b;
+    //
+    //
+    // MainComponent.oo = {
+    //     a:37
+    // };
+    // MainComponent.oo.gg="gg";
+
+    window.MainComponent = MainComponent;
+    window.HeaderComponent = HeaderComponent;
 };
-MainComponent.oo.gg = "gg";
-console.log(MainComponent);
-window.MainComponent = MainComponent;
+var c = {};
+// MainComponent.run = res;
+MainComponent.run();
 
 /***/ })
 /******/ ]);
