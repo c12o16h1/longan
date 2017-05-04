@@ -1,9 +1,9 @@
 import LonganComponent from '../lib/component'
-import Tree from '../lib/tree'
 const MainComponent = new LonganComponent('MainComponent');
 const HeaderComponent = new LonganComponent('HeaderComponent');
+HeaderComponent.asyncAdded = 0;
 MainComponent.run =  function () {
-    console.log(this._longan.name);
+    // console.log(this._longan.name);
     let a = ()=>{
         console.log(this)
 
@@ -26,3 +26,8 @@ MainComponent.run =  function () {
 let c = {};
 // MainComponent.run = res;
 MainComponent.run();
+
+setTimeout(function () {
+    HeaderComponent.asyncAdded = 10;
+    console.log(HeaderComponent);
+},1000);
