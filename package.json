@@ -1,7 +1,7 @@
 {
   "name": "longanjs",
-  "version": "0.0.0",
-  "description": "Another one JS framework",
+  "version": "0.0.1",
+  "description": "Custom observable based on ES6 Proxies",
   "main": "index.js",
   "directories": {
     "test": "test"
